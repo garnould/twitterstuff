@@ -141,7 +141,7 @@ if (deleted_tweets+deleted_favs) > 0
 
 else
 
-  update_str = "No tweet or favorite older than #{setup['days_before_deletion']} days were deleted #LifeCleaner https://github.com/garnould/twitterstuff"
+  update_str = "No tweet or favorite older than #{setup['days_before_deletion']} days was deleted #LifeCleaner https://github.com/garnould/twitterstuff"
 
 end
 
