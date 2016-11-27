@@ -1,0 +1,10 @@
+*~
+
+.DS_Store
+tmp/*
+archive/*
+backup/*
+
+lifecleaner.yml
+.ruby-version
+.ruby-gemset

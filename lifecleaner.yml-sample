@@ -1,0 +1,17 @@
+## config for lifecleaner
+
+# username: your twitter username
+
+username: some_username
+
+# days_before_deletion: objects (tweets/favs) older than this number of days will be deleted
+
+days_before_deletion: 7
+
+# consumer_key, consumer_secret, access_token and access_token_secret
+# those values come from https://apps.twitter.com/ (Create New App)
+
+consumer_key: some_consumer_key
+consumer_secret: some_consumer_secret
+access_token: some_access_token
+access_token_secret: somme_access_token_secret
