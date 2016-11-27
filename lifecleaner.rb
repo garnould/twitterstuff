@@ -53,6 +53,8 @@ deleted_favs = 0
 
 puts "Loaded #{tweets.count} tweets"
 
+# false to skip
+
 if true
 
   tweets.each_with_index do |tweet, idx|
@@ -62,14 +64,14 @@ if true
 
     begin
 
-      if created_at.to_datetime < (Date.today - setup['days_before_deletion'])
+      if created_at.to_datetime < (Date.today - setup['days_before_deletion']) or tweet.text.include? '#LifeCleaner'
 
         puts "destroying tweet_id: #{removeId} #{created_at} [#{idx+1}/#{tweets.count}]"
 
         client.destroy_status(removeId)
         puts " > destroyed tweet_id: #{removeId}"
 
-        deleted_tweets += 1
+        deleted_tweets += 1 if !tweet.text.include? '#LifeCleaner'
 
         #sleep(0.5)
 
@@ -96,6 +98,8 @@ favorites = client.favorites(setup['username'], {
                              })
 
 puts "Loaded #{favorites.count} favorites"
+
+# false to skip
 
 if true
 
@@ -135,14 +139,14 @@ if (deleted_tweets+deleted_favs) > 0
 
   update_str = "Deleted #{deleted_tweets} tweets & #{deleted_favs} favorites older than #{setup['days_before_deletion']} days #LifeCleaner https://github.com/garnould/twitterstuff"
 
-  puts 'sum-up sent to twitter'
-
-  client.update update_str
-
 else
 
-  puts "nothing was deleted (days before deletion: #{setup['days_before_deletion']})"
+  update_str = "No tweet or favorite older than #{setup['days_before_deletion']} days were deleted #LifeCleaner https://github.com/garnould/twitterstuff"
 
 end
+
+client.update update_str
+
+puts "'#{update_str}' sent to twitter"
 
 exit 0
