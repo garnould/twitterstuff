@@ -5,6 +5,7 @@ some Twitter stuff to make life easier (quick and dirty)
 ## lifecleaner.rb
 
 delete your tweets and favorites older than X days
+
 favorite your own tweets to protect them from deletion
 
 ### Setup
