@@ -8,3 +8,5 @@ backup/*
 lifecleaner.yml
 .ruby-version
 .ruby-gemset
+
+Gemfile.lock
