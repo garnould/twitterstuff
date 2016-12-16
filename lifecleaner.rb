@@ -339,7 +339,7 @@ tweets.each_with_index do |tweet, idx|
 
     else
 
-      puts "tweets: keeping #{removeId} #{created_at} [#{idx+1}/#{tweets.count}] (fresh enought)"
+      puts "tweets: keeping #{removeId} #{created_at} [#{idx+1}/#{tweets.count}] (fresh enough)"
 
     end
 
