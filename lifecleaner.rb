@@ -3,7 +3,7 @@
 #####################
 ### version
 
-VERSION = '1.0.2b'
+VERSION = '1.0.2c'
 
 #####################
 # locate me (root receives script's directory)
