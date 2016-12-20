@@ -28,12 +28,14 @@ def parseCommandLine
 
   options = { :help => false,
               :verbose => 0,
-              :dryrun => false }
+              :dryrun => false,
+              :status => true }
 
   opts = GetoptLong.new(
     [ '--help', '-h', GetoptLong::NO_ARGUMENT ],
     [ '--verbose', '-v', GetoptLong::OPTIONAL_ARGUMENT ],
-    [ '--dryrun', '-d', GetoptLong::NO_ARGUMENT ] )
+    [ '--dryrun', '-d', GetoptLong::NO_ARGUMENT ],
+    [ '--no-status', '-n', GetoptLong::NO_ARGUMENT ] )
 
   begin
 
@@ -47,6 +49,9 @@ def parseCommandLine
 
       when '--dryrun'
         options[:dryrun] = true
+
+      when '--no-status'
+        options[:status] = false
 
       end
     end
@@ -82,6 +87,7 @@ if options[:help]
   puts "\t" + '--help: this screen'
   puts "\t" + '--verbose [1-3]: verbosity (and optional level)'
   puts "\t" + '--dryrun: do NOT send any update to twitter, only show what should happen'
+  puts "\t" + '--no-status: do NOT send any final status to twitter'
 
   exit 0
 
@@ -190,11 +196,19 @@ tweets.each_with_index do |tweet, idx|
 
       else
 
-        puts "tweets: removing #{removeId} #{created_at} [#{idx+1}/#{tweets.count}]#{tweet.text.include?('#LifeCleaner') ? ' #LifeCleaner hastag' : ''}"
+        if options[:status]
 
-        client.destroy_status(removeId) if !options[:dryrun]
+          puts "tweets: removing #{removeId} #{created_at} [#{idx+1}/#{tweets.count}]#{tweet.text.include?('#LifeCleaner') ? ' #LifeCleaner hastag' : ''}"
 
-        deleted_tweets += 1 if !tweet.text.include? '#LifeCleaner'
+          client.destroy_status(removeId) if !options[:dryrun]
+
+          deleted_tweets += 1 if !tweet.text.include? '#LifeCleaner'
+
+        else
+
+          puts "tweets: not removing #{removeId} #{created_at} [#{idx+1}/#{tweets.count}]#{tweet.text.include?('#LifeCleaner') ? ' #LifeCleaner hastag, --no-status in use' : ''}"
+
+        end
 
       end
 
@@ -216,18 +230,26 @@ puts "#{protected_tweets} protected tweets found"
 
 # updating twitter
 
-if (deleted_tweets+deleted_favs) > 0
+if options[:status]
 
-  update_str = "#{deleted_tweets+deleted_favs} tweets/favorites older than #{setup['days_before_deletion']} days were deleted #LifeCleaner #{VERSION} https://github.com/garnould/twitterstuff"
+  if (deleted_tweets+deleted_favs) > 0
+
+    update_str = "#{deleted_tweets+deleted_favs} tweets/favorites older than #{setup['days_before_deletion']} days were deleted #LifeCleaner #{VERSION} https://github.com/garnould/twitterstuff"
+
+  else
+
+    update_str = "No tweet or favorite older than #{setup['days_before_deletion']} days was deleted #LifeCleaner #{VERSION} https://github.com/garnould/twitterstuff"
+
+  end
+
+  client.update update_str if !options[:dryrun]
+
+  puts "'#{update_str}' sent to twitter"
 
 else
 
-  update_str = "No tweet or favorite older than #{setup['days_before_deletion']} days was deleted #LifeCleaner #{VERSION} https://github.com/garnould/twitterstuff"
+  puts '--no-status in use, no status/activity sent to twitter'
 
 end
-
-client.update update_str if !options[:dryrun]
-
-puts "'#{update_str}' sent to twitter"
 
 exit 0
