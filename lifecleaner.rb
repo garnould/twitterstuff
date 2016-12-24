@@ -3,7 +3,7 @@
 #####################
 ### version
 
-VERSION = '1.0.2c'
+VERSION = '1.0.2d'
 
 #####################
 # locate me (root receives script's directory)
@@ -145,7 +145,7 @@ favorites.each_with_index do |tweet, idx|
 
     if tweet.user.screen_name == setup['username']
 
-      puts "favorite: tweet #{removeId} protected by self-favorite"
+      puts "favorite: keeping #{removeId}, protecting self-favorite tweet"
       tweets_protected_by_favorites[removeId] = 1
 
     elsif created_at.to_datetime < (Date.today - setup['days_before_deletion'])
@@ -187,28 +187,33 @@ tweets.each_with_index do |tweet, idx|
 
   begin
 
-    if created_at.to_datetime < (Date.today - setup['days_before_deletion']) or tweet.text.include? '#LifeCleaner'
+    if tweet.text.include?('#LifeCleaner')
 
-      if tweets_protected_by_favorites.has_key? removeId and !tweet.text.include? '#LifeCleaner'
+      if !options[:status]
+
+        puts "tweets: not removing #{removeId} #{created_at} [#{idx+1}/#{tweets.count}] #LifeCleaner hastag, --no-status in use"
+
+      else
+
+        puts "tweets: removing #{removeId} #{created_at} [#{idx+1}/#{tweets.count}] #LifeCleaner hastag"
+
+        client.destroy_status(removeId) if !options[:dryrun]
+
+      end
+
+    elsif created_at.to_datetime < (Date.today - setup['days_before_deletion'])
+
+      if tweets_protected_by_favorites.has_key?(removeId)
 
         puts "tweets: tweet #{removeId} protected by self-favorite"
         protected_tweets += 1
 
       else
 
-        if options[:status]
+        puts "tweets: removing #{removeId} #{created_at} [#{idx+1}/#{tweets.count}] (too old)"
 
-          puts "tweets: removing #{removeId} #{created_at} [#{idx+1}/#{tweets.count}]#{tweet.text.include?('#LifeCleaner') ? ' #LifeCleaner hastag' : ''}"
-
-          client.destroy_status(removeId) if !options[:dryrun]
-
-          deleted_tweets += 1 if !tweet.text.include? '#LifeCleaner'
-
-        else
-
-          puts "tweets: not removing #{removeId} #{created_at} [#{idx+1}/#{tweets.count}]#{tweet.text.include?('#LifeCleaner') ? ' #LifeCleaner hastag, --no-status in use' : ''}"
-
-        end
+        client.destroy_status(removeId) if !options[:dryrun]
+        deleted_tweets += 1
 
       end
 
@@ -219,7 +224,9 @@ tweets.each_with_index do |tweet, idx|
     end
 
   rescue => e
+
     puts "ooops: #{e} -- t_id: #{removeId}"
+
   end
 
 end
