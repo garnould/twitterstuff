@@ -3,7 +3,7 @@
 #####################
 ### version
 
-VERSION = '1.0.2d'
+VERSION = '1.0.2e'
 
 #####################
 # locate me (root receives script's directory)
@@ -29,13 +29,15 @@ def parseCommandLine
   options = { :help => false,
               :verbose => 0,
               :dryrun => false,
-              :status => true }
+              :publish_status => true,
+              :delete_status => false }
 
   opts = GetoptLong.new(
     [ '--help', '-h', GetoptLong::NO_ARGUMENT ],
     [ '--verbose', '-v', GetoptLong::OPTIONAL_ARGUMENT ],
     [ '--dryrun', '-d', GetoptLong::NO_ARGUMENT ],
-    [ '--no-status', '-n', GetoptLong::NO_ARGUMENT ] )
+    [ '--no-status', '-n', GetoptLong::NO_ARGUMENT ],
+    [ '--delete-status', '-s', GetoptLong::NO_ARGUMENT ] )
 
   begin
 
@@ -51,7 +53,10 @@ def parseCommandLine
         options[:dryrun] = true
 
       when '--no-status'
-        options[:status] = false
+        options[:publish_status] = false
+
+      when '--delete-status'
+        options[:delete_status] = true
 
       end
     end
@@ -88,6 +93,7 @@ if options[:help]
   puts "\t" + '--verbose [1-3]: verbosity (and optional level)'
   puts "\t" + '--dryrun: do NOT send any update to twitter, only show what should happen'
   puts "\t" + '--no-status: do NOT send any final status to twitter'
+  puts "\t" + '--delete-status: delete previous #LifeCleaner tweets'
 
   exit 0
 
@@ -189,33 +195,29 @@ tweets.each_with_index do |tweet, idx|
 
     if tweet.text.include?('#LifeCleaner')
 
-      if !options[:status]
-
-        puts "tweets: not removing #{removeId} #{created_at} [#{idx+1}/#{tweets.count}] #LifeCleaner hastag, --no-status in use"
-
-      else
+      if options[:delete_status] or options[:publish_status]
 
         puts "tweets: removing #{removeId} #{created_at} [#{idx+1}/#{tweets.count}] #LifeCleaner hastag"
 
         client.destroy_status(removeId) if !options[:dryrun]
 
+      else
+
+        puts "tweets: not removing #{removeId} #{created_at} [#{idx+1}/#{tweets.count}] #LifeCleaner hastag, force with --delete-status"
+
       end
+
+    elsif tweets_protected_by_favorites.has_key?(removeId)
+
+      puts "tweets: tweet #{removeId} protected by self-favorite"
+      protected_tweets += 1
 
     elsif created_at.to_datetime < (Date.today - setup['days_before_deletion'])
 
-      if tweets_protected_by_favorites.has_key?(removeId)
+      puts "tweets: removing #{removeId} #{created_at} [#{idx+1}/#{tweets.count}] (too old)"
 
-        puts "tweets: tweet #{removeId} protected by self-favorite"
-        protected_tweets += 1
-
-      else
-
-        puts "tweets: removing #{removeId} #{created_at} [#{idx+1}/#{tweets.count}] (too old)"
-
-        client.destroy_status(removeId) if !options[:dryrun]
-        deleted_tweets += 1
-
-      end
+      client.destroy_status(removeId) if !options[:dryrun]
+      deleted_tweets += 1
 
     else
 
@@ -237,25 +239,20 @@ puts "#{protected_tweets} protected tweets found"
 
 # updating twitter
 
-if options[:status]
+update_str = (deleted_tweets+deleted_favs) > 0 ?
+               "#{deleted_tweets+deleted_favs} tweets/favorites older than #{setup['days_before_deletion']} days were deleted #LifeCleaner #{VERSION} https://github.com/garnould/twitterstuff" :
+               "No tweet or favorite older than #{setup['days_before_deletion']} days was deleted #LifeCleaner #{VERSION} https://github.com/garnould/twitterstuff"
 
-  if (deleted_tweets+deleted_favs) > 0
+if options[:publish_status]
 
-    update_str = "#{deleted_tweets+deleted_favs} tweets/favorites older than #{setup['days_before_deletion']} days were deleted #LifeCleaner #{VERSION} https://github.com/garnould/twitterstuff"
-
-  else
-
-    update_str = "No tweet or favorite older than #{setup['days_before_deletion']} days was deleted #LifeCleaner #{VERSION} https://github.com/garnould/twitterstuff"
-
-  end
 
   client.update update_str if !options[:dryrun]
 
-  puts "'#{update_str}' sent to twitter"
+  puts "'#{update_str}' #{options[:dryrun] ? 'not ' : ''}really sent to twitter"
 
 else
 
-  puts '--no-status in use, no status/activity sent to twitter'
+  puts "--no-status in use, '#{update_str}' not sent to twitter"
 
 end
 
