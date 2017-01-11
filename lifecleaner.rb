@@ -29,14 +29,14 @@ def parseCommandLine
   options = { :help => false,
               :verbose => 0,
               :dryrun => false,
-              :publish_status => true,
+              :publish_status => false,
               :delete_status => false }
 
   opts = GetoptLong.new(
     [ '--help', '-h', GetoptLong::NO_ARGUMENT ],
     [ '--verbose', '-v', GetoptLong::OPTIONAL_ARGUMENT ],
     [ '--dryrun', '-d', GetoptLong::NO_ARGUMENT ],
-    [ '--no-status', '-n', GetoptLong::NO_ARGUMENT ],
+    [ '--publish-status', '-n', GetoptLong::NO_ARGUMENT ],
     [ '--delete-status', '-s', GetoptLong::NO_ARGUMENT ] )
 
   begin
@@ -52,8 +52,8 @@ def parseCommandLine
       when '--dryrun'
         options[:dryrun] = true
 
-      when '--no-status'
-        options[:publish_status] = false
+      when '--publish-status'
+        options[:publish_status] = true
 
       when '--delete-status'
         options[:delete_status] = true
@@ -92,7 +92,7 @@ if options[:help]
   puts "\t" + '--help: this screen'
   puts "\t" + '--verbose [1-3]: verbosity (and optional level)'
   puts "\t" + '--dryrun: do NOT send any update to twitter, only show what should happen'
-  puts "\t" + '--no-status: do NOT send any final status to twitter'
+  puts "\t" + '--publish-status: send any final status to twitter'
   puts "\t" + '--delete-status: delete previous #LifeCleaner tweets'
 
   exit 0
@@ -252,7 +252,7 @@ if options[:publish_status]
 
 else
 
-  puts "--no-status in use, '#{update_str}' not sent to twitter"
+  puts "--publish-status NOT in use, '#{update_str}' not sent to twitter"
 
 end
 
