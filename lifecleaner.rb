@@ -30,13 +30,15 @@ def parseCommandLine
               :verbose => 0,
               :dryrun => false,
               :publish_status => false,
-              :delete_status => false }
+              :delete_status => false,
+              :force => false }
 
   opts = GetoptLong.new(
     [ '--help', '-h', GetoptLong::NO_ARGUMENT ],
     [ '--verbose', '-v', GetoptLong::OPTIONAL_ARGUMENT ],
     [ '--dryrun', '-d', GetoptLong::NO_ARGUMENT ],
     [ '--publish-status', '-n', GetoptLong::NO_ARGUMENT ],
+    [ '--force', '-f', GetoptLong::NO_ARGUMENT ],
     [ '--delete-status', '-s', GetoptLong::NO_ARGUMENT ] )
 
   begin
@@ -57,6 +59,9 @@ def parseCommandLine
 
       when '--delete-status'
         options[:delete_status] = true
+
+      when '--force'
+        options[:force] = true
 
       end
     end
@@ -94,11 +99,11 @@ if options[:help]
   puts "\t" + '--dryrun: do NOT send any update to twitter, only show what should happen'
   puts "\t" + '--publish-status: send any final status to twitter'
   puts "\t" + '--delete-status: delete previous #LifeCleaner tweets'
+  puts "\t" + '--force: required to actually delete tweets/favorites'
 
   exit 0
 
 end
-
 
 # handling config
 
@@ -111,6 +116,13 @@ rescue
   puts 'please provide a readable lifecleaner.yml config file'
   exit 1
 
+end
+
+# an we go ?
+
+if !options[:force] and !options[:dryrun]
+  puts "--force has to be used when no --dryrun is used"
+  exit 1
 end
 
 # fancy display
