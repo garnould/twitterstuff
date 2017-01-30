@@ -5,7 +5,7 @@ tmp/*
 archive/*
 backup/*
 
-lifecleaner.yml
+undertherug.yml
 .ruby-version
 .ruby-gemset
 

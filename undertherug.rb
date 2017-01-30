@@ -3,7 +3,7 @@
 #####################
 ### version
 
-VERSION = '1.0.2e'
+VERSION = '1.0.2f'
 
 #####################
 # locate me (root receives script's directory)
@@ -30,7 +30,7 @@ def parseCommandLine
               :verbose => 0,
               :dryrun => false,
               :publish_status => false,
-              :delete_status => false,
+              :sweep_status => false,
               :force => false }
 
   opts = GetoptLong.new(
@@ -39,7 +39,7 @@ def parseCommandLine
     [ '--dryrun', '-d', GetoptLong::NO_ARGUMENT ],
     [ '--publish-status', '-n', GetoptLong::NO_ARGUMENT ],
     [ '--force', '-f', GetoptLong::NO_ARGUMENT ],
-    [ '--delete-status', '-s', GetoptLong::NO_ARGUMENT ] )
+    [ '--sweep-status', '-s', GetoptLong::NO_ARGUMENT ] )
 
   begin
 
@@ -57,8 +57,8 @@ def parseCommandLine
       when '--publish-status'
         options[:publish_status] = true
 
-      when '--delete-status'
-        options[:delete_status] = true
+      when '--sweep-status'
+        options[:sweep_status] = true
 
       when '--force'
         options[:force] = true
@@ -81,7 +81,7 @@ end
 #####################
 # main begins here ...
 
-puts "lifecleaner.rb"
+puts "undertherug.rb"
 
 # handling command line
 
@@ -93,13 +93,13 @@ exit 1 if options.nil?
 
 if options[:help]
 
-  puts 'lifecleaner.rb usage:'
+  puts 'undertherug.rb usage:'
   puts "\t" + '--help: this screen'
   puts "\t" + '--verbose [1-3]: verbosity (and optional level)'
   puts "\t" + '--dryrun: do NOT send any update to twitter, only show what should happen'
   puts "\t" + '--publish-status: send any final status to twitter'
-  puts "\t" + '--delete-status: delete previous #LifeCleaner tweets'
-  puts "\t" + '--force: required to actually delete tweets/favorites'
+  puts "\t" + '--sweep-status: sweep previous #UnderTheRug tweets'
+  puts "\t" + '--force: required to actually sweep tweets/favorites'
 
   exit 0
 
@@ -109,11 +109,11 @@ end
 
 begin
 
-  setup = YAML.load_file 'lifecleaner.yml'
+  setup = YAML.load_file 'undertherug.yml'
 
 rescue
 
-  puts 'please provide a readable lifecleaner.yml config file'
+  puts 'please provide a readable undertherug.yml config file'
   exit 1
 
 end
@@ -127,7 +127,7 @@ end
 
 # fancy display
 
-puts "#{options[:dryrun] ? 'simulating deletion of' : 'deleting'} tweets and favorites older than #{setup['days_before_deletion']} days"
+puts "#{options[:dryrun] ? 'simulating sweeping of' : 'sweeping'} tweets and favorites older than #{setup['days_before_sweeping']} days"
 puts "dryrun mode activated, nothing really sent to twitter" if options[:dryrun]
 
 # go go go !
@@ -141,8 +141,8 @@ end
 
 # counters
 
-deleted_tweets = 0
-deleted_favs = 0
+swept_tweets = 0
+swept_favs = 0
 protected_tweets = 0
 tweets_protected_by_favorites = Hash.new
 
@@ -166,13 +166,13 @@ favorites.each_with_index do |tweet, idx|
       puts "favorite: keeping #{removeId}, protecting self-favorite tweet"
       tweets_protected_by_favorites[removeId] = 1
 
-    elsif created_at.to_datetime < (Date.today - setup['days_before_deletion'])
+    elsif created_at.to_datetime < (Date.today - setup['days_before_sweeping'])
 
       puts "favorite: removing #{removeId} #{created_at} [#{idx+1}/#{favorites.count}]"
 
       client.unfavorite(removeId) if !options[:dryrun]
 
-      deleted_favs += 1
+      swept_favs += 1
 
     #sleep(0.5)
 
@@ -205,17 +205,17 @@ tweets.each_with_index do |tweet, idx|
 
   begin
 
-    if tweet.text.include?('#LifeCleaner')
+    if tweet.text.include?('#UnderTheRug')
 
-      if options[:delete_status] or options[:publish_status]
+      if options[:sweep_status] or options[:publish_status]
 
-        puts "tweets: removing #{removeId} #{created_at} [#{idx+1}/#{tweets.count}] #LifeCleaner hastag"
+        puts "tweets: removing #{removeId} #{created_at} [#{idx+1}/#{tweets.count}] #UnderTheRug hastag"
 
         client.destroy_status(removeId) if !options[:dryrun]
 
       else
 
-        puts "tweets: not removing #{removeId} #{created_at} [#{idx+1}/#{tweets.count}] #LifeCleaner hastag, force with --delete-status"
+        puts "tweets: not removing #{removeId} #{created_at} [#{idx+1}/#{tweets.count}] #UnderTheRug hastag, force with --sweep-status"
 
       end
 
@@ -224,12 +224,12 @@ tweets.each_with_index do |tweet, idx|
       puts "tweets: tweet #{removeId} protected by self-favorite"
       protected_tweets += 1
 
-    elsif created_at.to_datetime < (Date.today - setup['days_before_deletion'])
+    elsif created_at.to_datetime < (Date.today - setup['days_before_sweeping'])
 
       puts "tweets: removing #{removeId} #{created_at} [#{idx+1}/#{tweets.count}] (too old)"
 
       client.destroy_status(removeId) if !options[:dryrun]
-      deleted_tweets += 1
+      swept_tweets += 1
 
     else
 
@@ -251,9 +251,9 @@ puts "#{protected_tweets} protected tweets found"
 
 # updating twitter
 
-update_str = (deleted_tweets+deleted_favs) > 0 ?
-               "#{deleted_tweets+deleted_favs} tweets/favorites older than #{setup['days_before_deletion']} days were deleted #LifeCleaner #{VERSION} https://github.com/garnould/twitterstuff" :
-               "No tweet or favorite older than #{setup['days_before_deletion']} days was deleted #LifeCleaner #{VERSION} https://github.com/garnould/twitterstuff"
+update_str = (swept_tweets+swept_favs) > 0 ?
+               "#{swept_tweets+swept_favs} tweets/favorites older than #{setup['days_before_sweeping']} days were swept #UnderTheRug #{VERSION} https://github.com/garnould/twitterstuff" :
+               "No tweet or favorite older than #{setup['days_before_sweeping']} days was swept #UnderTheRug #{VERSION} https://github.com/garnould/twitterstuff"
 
 if options[:publish_status]
 

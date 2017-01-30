@@ -1,12 +1,12 @@
-## config for lifecleaner
+## config for undertherug
 
 # username: your twitter username
 
 username: some_username
 
-# days_before_deletion: objects (tweets/favs) older than this number of days will be deleted
+# days_before_sweeping: objects (tweets/favs) older than this number of days will be swept
 
-days_before_deletion: 7
+days_before_sweeping: 7
 
 # consumer_key, consumer_secret, access_token and access_token_secret
 # those values come from https://apps.twitter.com/ (Create New App)
