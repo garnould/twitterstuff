@@ -109,7 +109,7 @@ end
 
 begin
 
-  setup = YAML.load_file 'undertherug.yml'
+  setup = YAML.load_file File.dirname(__FILE__) + '/undertherug.yml'
 
 rescue
 
