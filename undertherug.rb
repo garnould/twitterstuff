@@ -3,7 +3,7 @@
 #####################
 ### version
 
-VERSION = '1.0.2f'
+VERSION = '1.0.2g'
 
 #####################
 # locate me (root receives script's directory)
@@ -144,6 +144,8 @@ end
 swept_tweets = 0
 swept_favs = 0
 protected_tweets = 0
+kept_tweets = 0
+kept_favs = 0
 tweets_protected_by_favorites = Hash.new
 
 # handling favorites
@@ -179,6 +181,8 @@ favorites.each_with_index do |tweet, idx|
     else
 
       puts "favorite: keeping #{removeId} #{created_at} [#{idx+1}/#{favorites.count}]"
+
+      kept_favs += 1
 
     end
 
@@ -217,12 +221,16 @@ tweets.each_with_index do |tweet, idx|
 
         puts "tweets: not removing #{removeId} #{created_at} [#{idx+1}/#{tweets.count}] #UnderTheRug hastag, force with --sweep-status"
 
+        kept_tweets += 1
+
       end
 
     elsif tweets_protected_by_favorites.has_key?(removeId)
 
       puts "tweets: tweet #{removeId} protected by self-favorite"
       protected_tweets += 1
+
+      kept_tweets += 1
 
     elsif created_at.to_datetime < (Date.today - setup['days_before_sweeping'])
 
@@ -234,6 +242,8 @@ tweets.each_with_index do |tweet, idx|
     else
 
       puts "tweets: keeping #{removeId} #{created_at} [#{idx+1}/#{tweets.count}] (fresh enough)"
+
+      kept_tweets += 1
 
     end
 
@@ -267,5 +277,7 @@ else
   puts "--publish-status NOT in use, '#{update_str}' not sent to twitter"
 
 end
+
+puts "Kept #{kept_tweets+kept_favs} activities, including #{kept_favs} favs & #{kept_tweets} tweets (#{protected_tweets} protected)"
 
 exit 0
