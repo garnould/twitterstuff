@@ -3,7 +3,7 @@
 #####################
 ### version
 
-VERSION = '1.0.2g'
+VERSION = '1.0.3'
 
 #####################
 # locate me (root receives script's directory)
@@ -31,7 +31,9 @@ def parseCommandLine
               :dryrun => false,
               :publish_status => false,
               :sweep_status => false,
-              :force => false }
+              :force => false,
+              :username => nil,
+              :dump_config => false }
 
   opts = GetoptLong.new(
     [ '--help', '-h', GetoptLong::NO_ARGUMENT ],
@@ -39,6 +41,8 @@ def parseCommandLine
     [ '--dryrun', '-d', GetoptLong::NO_ARGUMENT ],
     [ '--publish-status', '-n', GetoptLong::NO_ARGUMENT ],
     [ '--force', '-f', GetoptLong::NO_ARGUMENT ],
+    [ '--dump-config', '-c', GetoptLong::NO_ARGUMENT ],
+    [ '--username', '-u', GetoptLong::REQUIRED_ARGUMENT ],
     [ '--sweep-status', '-s', GetoptLong::NO_ARGUMENT ] )
 
   begin
@@ -62,6 +66,12 @@ def parseCommandLine
 
       when '--force'
         options[:force] = true
+
+      when '--dump-config'
+        options[:dump_config] = true
+
+      when '--username'
+        options[:username] = arg
 
       end
     end
@@ -100,6 +110,8 @@ if options[:help]
   puts "\t" + '--publish-status: send any final status to twitter'
   puts "\t" + '--sweep-status: sweep previous #UnderTheRug tweets'
   puts "\t" + '--force: required to actually sweep tweets/favorites'
+  puts "\t" + '--dump-config: shows config content and exits'
+  puts "\t" + '--username user: cleans only one username (useful when having several in config)'
 
   exit 0
 
@@ -118,6 +130,65 @@ rescue
 
 end
 
+
+# Casting single user config
+
+if setup.is_a? Hash
+
+  setup = [ setup.dup ]
+
+end
+
+# Checking config
+
+error_detected = false
+
+setup.each_index do |index|
+
+  userconfig = setup[index]
+
+  [ 'username', 'days_before_sweeping', 'consumer_key', 'consumer_secret', 'access_token', 'access_token_secret' ].each do |key|
+
+    if !userconfig.has_key? key
+
+      puts "config error at index ##{index}: no '#{key}' field" if !userconfig.has_key? 'username'
+      puts "config error at index ##{index} for user '#{userconfig['username']}': no '#{key}' field" if userconfig.has_key? 'username'
+      error_detected = true
+
+    end
+
+  end
+
+end
+
+exit 1 if error_detected
+
+# Keeping only one username ?
+
+if !options[:username].blank?
+
+  setup.delete_if { |item| item['username'] != options[:username]}
+
+end
+
+# checking
+
+if setup.length == 0
+
+  puts 'invalid config (empty) or --username option (not found)'
+  exit 1
+
+end
+
+# Some dump ?
+
+if options[:dump_config]
+
+  puts setup.class.to_s + ' : ' + setup.inspect
+  exit 0
+
+end
+
 # an we go ?
 
 if !options[:force] and !options[:dryrun]
@@ -125,159 +196,167 @@ if !options[:force] and !options[:dryrun]
   exit 1
 end
 
-# fancy display
+setup.each do |usersetup|
 
-puts "#{options[:dryrun] ? 'simulating sweeping of' : 'sweeping'} tweets and favorites older than #{setup['days_before_sweeping']} days"
-puts "dryrun mode activated, nothing really sent to twitter" if options[:dryrun]
+  # header
 
-# go go go !
+  puts "working on username #{usersetup['username']}"
 
-client = Twitter::REST::Client.new do |config|
-  config.consumer_key = setup['consumer_key']
-  config.consumer_secret = setup['consumer_secret']
-  config.access_token = setup['access_token']
-  config.access_token_secret = setup['access_token_secret']
-end
+  # fancy display
 
-# counters
+  puts "#{options[:dryrun] ? 'simulating sweeping of' : 'sweeping'} tweets and favorites older than #{usersetup['days_before_sweeping']} days"
+  puts "dryrun mode activated, nothing really sent to twitter" if options[:dryrun]
 
-swept_tweets = 0
-swept_favs = 0
-protected_tweets = 0
-kept_tweets = 0
-kept_favs = 0
-tweets_protected_by_favorites = Hash.new
+  # go go go !
 
-# handling favorites
-
-favorites = client.favorites(setup['username'], {
-                               :count => 3200
-                             })
-
-puts "loaded #{favorites.count} favorites"
-
-favorites.each_with_index do |tweet, idx|
-
-  removeId = tweet.id
-  created_at = tweet.created_at
-
-  begin
-
-    if tweet.user.screen_name == setup['username']
-
-      puts "favorite: keeping #{removeId}, protecting self-favorite tweet"
-      tweets_protected_by_favorites[removeId] = 1
-
-    elsif created_at.to_datetime < (Date.today - setup['days_before_sweeping'])
-
-      puts "favorite: removing #{removeId} #{created_at} [#{idx+1}/#{favorites.count}]"
-
-      client.unfavorite(removeId) if !options[:dryrun]
-
-      swept_favs += 1
-
-    #sleep(0.5)
-
-    else
-
-      puts "favorite: keeping #{removeId} #{created_at} [#{idx+1}/#{favorites.count}]"
-
-      kept_favs += 1
-
-    end
-
-  rescue => e
-    puts "ooops: #{e} -- t_id: #{removeId}"
+  client = Twitter::REST::Client.new do |config|
+    config.consumer_key = usersetup['consumer_key']
+    config.consumer_secret = usersetup['consumer_secret']
+    config.access_token = usersetup['access_token']
+    config.access_token_secret = usersetup['access_token_secret']
   end
 
-end
+  # counters
 
-# handling tweets
+  swept_tweets = 0
+  swept_favs = 0
+  protected_tweets = 0
+  kept_tweets = 0
+  kept_favs = 0
+  tweets_protected_by_favorites = Hash.new
 
-tweets = client.user_timeline(setup['username'], {
-                                    :count => 3200,
-                                    :exclude_replies => false,
-                                    :include_rts => true
-                                  })
+  # handling favorites
 
-puts "loaded #{tweets.count} tweets"
+  favorites = client.favorites(usersetup['username'], {
+                                 :count => 3200
+                               })
 
-tweets.each_with_index do |tweet, idx|
+  puts "loaded #{favorites.count} favorites"
 
-  removeId = tweet.id
-  created_at = tweet.created_at
+  favorites.each_with_index do |tweet, idx|
 
-  begin
+    removeId = tweet.id
+    created_at = tweet.created_at
 
-    if tweet.text.include?('#UnderTheRug')
+    begin
 
-      if options[:sweep_status] or options[:publish_status]
+      if tweet.user.screen_name == usersetup['username']
 
-        puts "tweets: removing #{removeId} #{created_at} [#{idx+1}/#{tweets.count}] #UnderTheRug hastag"
+        puts "favorite: keeping #{removeId}, protecting self-favorite tweet"
+        tweets_protected_by_favorites[removeId] = 1
 
-        client.destroy_status(removeId) if !options[:dryrun]
+      elsif created_at.to_datetime < (Date.today - usersetup['days_before_sweeping'])
+
+        puts "favorite: removing #{removeId} #{created_at} [#{idx+1}/#{favorites.count}]"
+
+        client.unfavorite(removeId) if !options[:dryrun]
+
+        swept_favs += 1
+
+      #sleep(0.5)
 
       else
 
-        puts "tweets: not removing #{removeId} #{created_at} [#{idx+1}/#{tweets.count}] #UnderTheRug hastag, force with --sweep-status"
+        puts "favorite: keeping #{removeId} #{created_at} [#{idx+1}/#{favorites.count}]"
+
+        kept_favs += 1
+
+      end
+
+    rescue => e
+      puts "ooops: #{e} -- t_id: #{removeId}"
+    end
+
+  end
+
+  # handling tweets
+
+  tweets = client.user_timeline(usersetup['username'], {
+                                  :count => 3200,
+                                  :exclude_replies => false,
+                                  :include_rts => true
+                                })
+
+  puts "loaded #{tweets.count} tweets"
+
+  tweets.each_with_index do |tweet, idx|
+
+    removeId = tweet.id
+    created_at = tweet.created_at
+
+    begin
+
+      if tweet.text.include?('#UnderTheRug')
+
+        if options[:sweep_status] or options[:publish_status]
+
+          puts "tweets: removing #{removeId} #{created_at} [#{idx+1}/#{tweets.count}] #UnderTheRug hastag"
+
+          client.destroy_status(removeId) if !options[:dryrun]
+
+        else
+
+          puts "tweets: not removing #{removeId} #{created_at} [#{idx+1}/#{tweets.count}] #UnderTheRug hastag, force with --sweep-status"
+
+          kept_tweets += 1
+
+        end
+
+      elsif tweets_protected_by_favorites.has_key?(removeId)
+
+        puts "tweets: tweet #{removeId} protected by self-favorite"
+        protected_tweets += 1
+
+        kept_tweets += 1
+
+      elsif created_at.to_datetime < (Date.today - usersetup['days_before_sweeping'])
+
+        puts "tweets: removing #{removeId} #{created_at} [#{idx+1}/#{tweets.count}] (too old)"
+
+        client.destroy_status(removeId) if !options[:dryrun]
+        swept_tweets += 1
+
+      else
+
+        puts "tweets: keeping #{removeId} #{created_at} [#{idx+1}/#{tweets.count}] (fresh enough)"
 
         kept_tweets += 1
 
       end
 
-    elsif tweets_protected_by_favorites.has_key?(removeId)
+    rescue => e
 
-      puts "tweets: tweet #{removeId} protected by self-favorite"
-      protected_tweets += 1
-
-      kept_tweets += 1
-
-    elsif created_at.to_datetime < (Date.today - setup['days_before_sweeping'])
-
-      puts "tweets: removing #{removeId} #{created_at} [#{idx+1}/#{tweets.count}] (too old)"
-
-      client.destroy_status(removeId) if !options[:dryrun]
-      swept_tweets += 1
-
-    else
-
-      puts "tweets: keeping #{removeId} #{created_at} [#{idx+1}/#{tweets.count}] (fresh enough)"
-
-      kept_tweets += 1
+      puts "ooops: #{e} -- t_id: #{removeId}"
 
     end
 
-  rescue => e
+  end
 
-    puts "ooops: #{e} -- t_id: #{removeId}"
+  # fancy message
+
+  puts "#{protected_tweets} protected tweets found"
+
+  # updating twitter
+
+  update_str = (swept_tweets+swept_favs) > 0 ?
+                 "#{swept_tweets+swept_favs} tweets/favorites older than #{usersetup['days_before_sweeping']} days were swept #UnderTheRug #{VERSION} https://github.com/garnould/twitterstuff" :
+                 "No tweet or favorite older than #{usersetup['days_before_sweeping']} days was swept #UnderTheRug #{VERSION} https://github.com/garnould/twitterstuff"
+
+  if options[:publish_status]
+
+
+    client.update update_str if !options[:dryrun]
+
+    puts "'#{update_str}' #{options[:dryrun] ? 'not ' : ''}really sent to twitter"
+
+  else
+
+    puts "--publish-status NOT in use, '#{update_str}' not sent to twitter"
 
   end
 
-end
-
-# fancy message
-
-puts "#{protected_tweets} protected tweets found"
-
-# updating twitter
-
-update_str = (swept_tweets+swept_favs) > 0 ?
-               "#{swept_tweets+swept_favs} tweets/favorites older than #{setup['days_before_sweeping']} days were swept #UnderTheRug #{VERSION} https://github.com/garnould/twitterstuff" :
-               "No tweet or favorite older than #{setup['days_before_sweeping']} days was swept #UnderTheRug #{VERSION} https://github.com/garnould/twitterstuff"
-
-if options[:publish_status]
-
-
-  client.update update_str if !options[:dryrun]
-
-  puts "'#{update_str}' #{options[:dryrun] ? 'not ' : ''}really sent to twitter"
-
-else
-
-  puts "--publish-status NOT in use, '#{update_str}' not sent to twitter"
+  puts "Kept #{kept_tweets+kept_favs} activities, including #{kept_favs} favs & #{kept_tweets} tweets (#{protected_tweets} protected)"
 
 end
-
-puts "Kept #{kept_tweets+kept_favs} activities, including #{kept_favs} favs & #{kept_tweets} tweets (#{protected_tweets} protected)"
 
 exit 0

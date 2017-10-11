@@ -1,17 +1,47 @@
 ## config for undertherug
 
+# when you have only one user, your file can look like
+#
+#
+# username: <user>
+# days_before_sweeping: <days>
+# consumer_key: <some_consumer_key>
+# consumer_secret: <some_consumer_secret>
+# access_token: <some_access_token>
+# access_token_secret: <somme_access_token_secret>
+#
+#
+# when you have several users, you need to place each config in an array, the file will look like
+#
+#
+# -
+#   username: <user1>
+#   days_before_sweeping: <days1>
+#   consumer_key: <some_consumer_key1>
+#   consumer_secret: <some_consumer_secret1>
+#   access_token: <some_access_token1>
+#   access_token_secret: <somme_access_token_secret1>
+# -
+#   username: <user2>
+#   days_before_sweeping: <days2>
+#   consumer_key: <some_consumer_key2>
+#   consumer_secret: <some_consumer_secret2>
+#   access_token: <some_access_token2>
+#   access_token_secret: <somme_access_token_secret2>
+#
+#
+# config is now defaulted to the array mode (several users)
+
+
 # username: your twitter username
-
-username: some_username
-
 # days_before_sweeping: objects (tweets/favs) older than this number of days will be swept
-
-days_before_sweeping: 7
-
 # consumer_key, consumer_secret, access_token and access_token_secret
-# those values come from https://apps.twitter.com/ (Create New App)
+#    those values come from https://apps.twitter.com/ (Create New App)
 
-consumer_key: some_consumer_key
-consumer_secret: some_consumer_secret
-access_token: some_access_token
-access_token_secret: somme_access_token_secret
+-
+  username: some_username
+  days_before_sweeping: 7
+  consumer_key: some_consumer_key
+  consumer_secret: some_consumer_secret
+  access_token: some_access_token
+  access_token_secret: somme_access_token_secret

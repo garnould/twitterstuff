@@ -6,7 +6,7 @@ some Twitter stuff to make life easier (quick and dirty)
 
 Hides your tweets and favorites older than X days under the rug.
 
-favorite your own tweets to protect them from sweeping
+Fav your own tweets to protect them from sweeping
 
 ### Setup
 
@@ -28,15 +28,20 @@ favorite your own tweets to protect them from sweeping
 
 ### ChangeLog
 
-#### first commit
+#### 1.0.3
 
-1. Processing tweets/favorites older than X days  and sending an update to tweeter
+1. support several accounts in a single config file
+2. improved config checking
+
+#### 1.0.2f
+
+1. renamed the wrongly named lifecleaner.rb to undertherug.rb.
 
 #### 1.0.2
 
 1. getoptlong gem required, see --help for details
 2. feature: you can protect your tweets from being swept if too old by favoriting those updates (self favorited tweets are not swept).
 
-#### 1.0.2f
+#### first commit
 
-1. renamed the wrongly named lifecleaner.rb to undertherug.rb.
+1. Processing tweets/favorites older than X days  and sending an update to tweeter
