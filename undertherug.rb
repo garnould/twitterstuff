@@ -3,7 +3,7 @@
 #####################
 ### version
 
-VERSION = '1.0.3'
+VERSION = '1.0.4'
 
 #####################
 # locate me (root receives script's directory)
@@ -167,7 +167,7 @@ exit 1 if error_detected
 
 if !options[:username].blank?
 
-  setup.delete_if { |item| item['username'] != options[:username]}
+  setup.delete_if { |item| item['username'].downcase != options[:username].downcase }
 
 end
 
@@ -240,7 +240,7 @@ setup.each do |usersetup|
 
     begin
 
-      if tweet.user.screen_name == usersetup['username']
+      if tweet.user.screen_name.downcase == usersetup['username'].downcase
 
         puts "favorite: keeping #{removeId}, protecting self-favorite tweet"
         tweets_protected_by_favorites[removeId] = 1
