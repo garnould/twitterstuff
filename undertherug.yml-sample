@@ -9,6 +9,8 @@
 # consumer_secret: <some_consumer_secret>
 # access_token: <some_access_token>
 # access_token_secret: <somme_access_token_secret>
+## next option describe if status should be published (never, ever, accordingly to the cmdline)
+# publish_status: never|cmdline|always
 #
 #
 # when you have several users, you need to place each config in an array, the file will look like
@@ -21,6 +23,8 @@
 #   consumer_secret: <some_consumer_secret1>
 #   access_token: <some_access_token1>
 #   access_token_secret: <somme_access_token_secret1>
+##  next option describe if status should be published (never, ever, accordingly to the cmdline)
+#   publish_status: never|cmdline|always
 # -
 #   username: <user2>
 #   days_before_sweeping: <days2>
@@ -28,6 +32,8 @@
 #   consumer_secret: <some_consumer_secret2>
 #   access_token: <some_access_token2>
 #   access_token_secret: <somme_access_token_secret2>
+##  next option describe if status should be published (never, ever, accordingly to the cmdline)
+#   publish_status: never|cmdline|always
 #
 #
 # config is now defaulted to the array mode (several users)
@@ -45,3 +51,4 @@
   consumer_secret: some_consumer_secret
   access_token: some_access_token
   access_token_secret: somme_access_token_secret
+  publish_status: cmdline

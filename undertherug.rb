@@ -3,7 +3,7 @@
 #####################
 ### version
 
-VERSION = '1.0.4'
+VERSION = '1.0.5'
 
 #####################
 # locate me (root receives script's directory)
@@ -159,6 +159,14 @@ setup.each_index do |index|
 
   end
 
+  if userconfig.has_key? 'publish_status' and ![ 'never', 'cmdline', 'always' ].include? userconfig['publish_status']
+
+      puts "config error at index ##{index}: invalid publish_status value '#{userconfig['publish_status']}'" if !userconfig.has_key? 'username'
+      puts "config error at index ##{index} for user '#{userconfig['username']}':  invalid publish_status value '#{userconfig['publish_status']}'" if userconfig.has_key? 'username'
+      error_detected = true
+
+  end
+
 end
 
 exit 1 if error_detected
@@ -288,7 +296,7 @@ setup.each do |usersetup|
 
       if tweet.text.include?('#UnderTheRug')
 
-        if options[:sweep_status] or options[:publish_status]
+        if options[:sweep_status] or options[:publish_status] or (usersetup.has_key? 'publish_status' and usersetup['publish_status'] == 'never')
 
           puts "tweets: removing #{removeId} #{created_at} [#{idx+1}/#{tweets.count}] #UnderTheRug hastag"
 
@@ -342,7 +350,7 @@ setup.each do |usersetup|
                  "#{swept_tweets+swept_favs} tweets/favorites older than #{usersetup['days_before_sweeping']} days were swept #UnderTheRug #{VERSION} https://github.com/garnould/twitterstuff" :
                  "No tweet or favorite older than #{usersetup['days_before_sweeping']} days was swept #UnderTheRug #{VERSION} https://github.com/garnould/twitterstuff"
 
-  if options[:publish_status]
+  if options[:publish_status] or (usersetup.has_key? 'publish_status' and usersetup['publish_status'] == 'always')
 
 
     client.update update_str if !options[:dryrun]
