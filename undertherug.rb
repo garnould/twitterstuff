@@ -3,7 +3,7 @@
 #####################
 ### version
 
-VERSION = '1.0.5'
+VERSION = '1.0.6'
 
 #####################
 # locate me (root receives script's directory)
@@ -350,8 +350,7 @@ setup.each do |usersetup|
                  "#{swept_tweets+swept_favs} tweets/favorites older than #{usersetup['days_before_sweeping']} days were swept #UnderTheRug #{VERSION} https://github.com/garnould/twitterstuff" :
                  "No tweet or favorite older than #{usersetup['days_before_sweeping']} days was swept #UnderTheRug #{VERSION} https://github.com/garnould/twitterstuff"
 
-  if options[:publish_status] or (usersetup.has_key? 'publish_status' and usersetup['publish_status'] == 'always')
-
+  if (options[:publish_status] and (!(usersetup.has_key? 'publish_status' and usersetup['publish_status'] == 'never'))) or (usersetup.has_key? 'publish_status' and usersetup['publish_status'] == 'always')
 
     client.update update_str if !options[:dryrun]
 
