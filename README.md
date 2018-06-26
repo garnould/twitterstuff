@@ -1,32 +1,58 @@
 # twitterstuff
 
-some Twitter stuff to make life easier (quick and dirty)
+Some Twitter stuff to make life easier (quick and dirty)
+
+At the moment, the only script is "undertherug.rb" : a tool that let you ~destroy your favorites/tweets automatically after a certain period of time.
 
 ## undertherug.rb
 
-Hides your tweets and favorites older than X days under the rug.
+undertherug.rb let you ~destroy your favorites/tweets after a certain period of time.
 
-Fav your own tweets to protect them from sweeping
+Disclaimer: author does NOT believe that anything is actually deleted on Twitter platform, hence the name of this script. This script was renamed in order to have you keep in mind that your twitter activity is probably only hidden (under the rug) to other people eyes, but not to Twitter people.
+
+Good to know: undertherub.rb skips any of your own tweets/RT you fav'ed, whatever their age.
 
 ### Setup
 
-1. copy **undertherug.yml-sample** to **undertherug.yml**
-2. edit **undertherug.yml** and set:
- 1. Your twitter username (**username**)
- 2. The number of days until your tweets and favs are swept (**days_before_sweeping**)
- 3. **consumer_key**, **consumer_secret**, **access_token** and **access_token_secret** as taken from https://apps.twitter.com/ (Create New App)
-3. install any missing gems (twitter & json required)
- 1. $ gem install bundler
- 2. $ bundle install
+#### Config (undertherug.yml)
+
+**undertherug.yml-sample** is a YAML formatted config file. It can support one or several users/accounts.
+
+Keys are:
+
+ * **username**: your screen name
+ * **days_before_sweeping**: number of days your activities will last if not "self fav'ed" (tweets, RT)
+ * **publish_status**: undertherug.rb can published a tweet of its own activity. Config file can override command line (never, always, cmdline)
+ * **consumer_key**, **consumer_secret**, **access_token** and **access_token_secret** as taken from https://apps.twitter.com/ (Create New App)
+
+
+#### Gems
+
+Install any missing gems (twitter & json required)
+
+ * $ gem install bundler
+ * $ bundle install
 
 ### Run
 
-1. help: $ ./undertherug.rb --help
-2. dry run: $ ./undertherug.rb --dryrun
-3. sweeping old tweets: $ ./undertherug.rb --force
+Commandline option:
+
+ * --help: help screen
+ * --verbose [1-3]: verbosity (and optional level)
+ * --dryrun/--force : mandatory
+  * --dryrun: do NOT send any update to twitter, only show what should happen
+  * --force: required to actually sweep tweets/favorites and eventually publish status
+ * --publish-status: send any final status to twitter
+ * --sweep-status: sweep previous #UnderTheRug tweets
+ * --dump-config: shows config content and exits
+ * --username user: cleans only one username (useful when having several in config)
 
 
 ### ChangeLog
+
+#### 1.0.6
+
+1. Multi-accounts support
 
 #### 1.0.3
 
