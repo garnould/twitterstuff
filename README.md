@@ -10,7 +10,7 @@ undertherug.rb let you ~destroy your favorites/tweets after a certain period of 
 
 Disclaimer: author does NOT believe that anything is actually deleted on Twitter platform, hence the name of this script. This script was renamed in order to have you keep in mind that your twitter activity is probably only hidden (under the rug) to other people eyes, but not to Twitter people.
 
-Good to know: undertherub.rb skips any of your own tweets/RT you fav'ed, whatever their age.
+**Good to know: undertherub.rb skips any of your own tweets/RT you fav'ed, whatever their age.**
 
 ### Setup
 
@@ -40,8 +40,8 @@ Commandline option:
  * --help: help screen
  * --verbose [1-3]: verbosity (and optional level)
  * --dryrun/--force : mandatory
-  * --dryrun: do NOT send any update to twitter, only show what should happen
-  * --force: required to actually sweep tweets/favorites and eventually publish status
+   * --dryrun: do NOT send any update to twitter, only show what should happen
+   * --force: required to actually sweep tweets/favorites and eventually publish status
  * --publish-status: send any final status to twitter
  * --sweep-status: sweep previous #UnderTheRug tweets
  * --dump-config: shows config content and exits
