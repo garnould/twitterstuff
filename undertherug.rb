@@ -3,7 +3,7 @@
 #####################
 ### version
 
-VERSION = '1.0.6'
+VERSION = '1.0.7'
 
 #####################
 # locate me (root receives script's directory)
@@ -231,7 +231,7 @@ setup.each do |usersetup|
   protected_tweets = 0
   kept_tweets = 0
   kept_favs = 0
-  tweets_protected_by_favorites = Hash.new
+  favorites_tweet_ids = Hash.new
 
   # handling favorites
 
@@ -243,37 +243,9 @@ setup.each do |usersetup|
 
   favorites.each_with_index do |tweet, idx|
 
-    removeId = tweet.id
-    created_at = tweet.created_at
+    # we set 0 when "unknown status", 1 when protecting tweet, 2 for retweet (and then won't be deleted after XXX days)
 
-    begin
-
-      if tweet.user.screen_name.downcase == usersetup['username'].downcase
-
-        puts "favorite: keeping #{removeId}, protecting self-favorite tweet"
-        tweets_protected_by_favorites[removeId] = 1
-
-      elsif created_at.to_datetime < (Date.today - usersetup['days_before_sweeping'])
-
-        puts "favorite: removing #{removeId} #{created_at} [#{idx+1}/#{favorites.count}]"
-
-        client.unfavorite(removeId) if !options[:dryrun]
-
-        swept_favs += 1
-
-      #sleep(0.5)
-
-      else
-
-        puts "favorite: keeping #{removeId} #{created_at} [#{idx+1}/#{favorites.count}]"
-
-        kept_favs += 1
-
-      end
-
-    rescue => e
-      puts "ooops: #{e} -- t_id: #{removeId}"
-    end
+    favorites_tweet_ids[tweet.id] = 0
 
   end
 
@@ -310,9 +282,20 @@ setup.each do |usersetup|
 
         end
 
-      elsif tweets_protected_by_favorites.has_key?(removeId)
+      elsif favorites_tweet_ids.has_key?(removeId)
+
+        favorites_tweet_ids[removeId] = 1
 
         puts "tweets: tweet #{removeId} protected by self-favorite"
+        protected_tweets += 1
+
+        kept_tweets += 1
+
+      elsif tweet.retweet? and favorites_tweet_ids.has_key?(tweet.retweeted_status.id)
+
+        favorites_tweet_ids[tweet.retweeted_status.id] = 2
+
+        puts "tweets: tweet #{removeId} (retweet of #{tweet.retweeted_status.id}) protected by self-favorite"
         protected_tweets += 1
 
         kept_tweets += 1
@@ -336,6 +319,43 @@ setup.each do |usersetup|
 
       puts "ooops: #{e} -- t_id: #{removeId}"
 
+    end
+
+  end
+
+  # deleting too old favorites
+
+  favorites.each_with_index do |tweet, idx|
+
+    removeId = tweet.id
+    created_at = tweet.created_at
+
+    begin
+
+      if favorites_tweet_ids[removeId] != 0
+
+        puts "favorite: keeping #{removeId}, protecting self-favorite #{favorites_tweet_ids[removeId] == 1 ? '' : 're'}tweet [#{idx+1}/#{favorites.count}]"
+
+      elsif created_at.to_datetime < (Date.today - usersetup['days_before_sweeping'])
+
+        puts "favorite: removing #{removeId} #{created_at} [#{idx+1}/#{favorites.count}] (too old)"
+
+        client.unfavorite(removeId) if !options[:dryrun]
+
+        swept_favs += 1
+
+      #sleep(0.5)
+
+      else
+
+        puts "favorite: keeping #{removeId} #{created_at} [#{idx+1}/#{favorites.count}] (fresh enough)"
+
+        kept_favs += 1
+
+      end
+
+    rescue => e
+      puts "ooops: #{e} -- t_id: #{removeId}"
     end
 
   end

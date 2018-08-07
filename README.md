@@ -50,6 +50,10 @@ Commandline option:
 
 ### ChangeLog
 
+#### 1.0.7
+
+1. Reweets receiving your fav are not more swept
+
 #### 1.0.6
 
 1. Multi-accounts support
