@@ -384,6 +384,10 @@ setup.each do |usersetup|
 
   puts "Kept #{kept_tweets+kept_favs} activities, including #{kept_favs} favs & #{kept_tweets} tweets (#{protected_tweets} protected)"
 
+  # getting some rate_limits info (dirty)
+  # rate_limits = Twitter::REST::Request.new(client, :get, '/1.1/application/rate_limit_status.json').perform
+  # puts rate_limits.inspect
+
 end
 
 exit 0
