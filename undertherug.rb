@@ -3,7 +3,7 @@
 #####################
 ### version
 
-VERSION = '1.0.7'
+VERSION = '1.0.8'
 
 #####################
 # locate me (root receives script's directory)
@@ -235,9 +235,38 @@ setup.each do |usersetup|
 
   # handling favorites
 
-  favorites = client.favorites(usersetup['username'], {
-                                 :count => 3200
-                               })
+  favorites = [ ]
+  fav_options = {
+    :count => 3200
+  }
+  done = false
+  min_max_id = 0
+
+  while !done
+
+    favorite_chunck = client.favorites(usersetup['username'], fav_options)
+
+    puts "Got favs chunk containing #{favorite_chunck.count} elems with #{fav_options.inspect}" if options[:verbose] > 0
+
+    if favorite_chunck.count > 0
+
+      min_max_id = favorite_chunck.first.id # taking first favorite id as initial value
+
+      favorite_chunck.each do |f|
+
+        min_max_id = f.id if f.id < min_max_id
+
+      end
+
+      fav_options[:max_id] = min_max_id - 1 # picking id that is just 1 lower to the min of the chunk
+
+      favorites = favorites + favorite_chunck
+
+    end
+
+    done = (favorite_chunck.count == 0)
+
+  end
 
   puts "loaded #{favorites.count} favorites"
 
@@ -251,11 +280,39 @@ setup.each do |usersetup|
 
   # handling tweets
 
-  tweets = client.user_timeline(usersetup['username'], {
-                                  :count => 3200,
-                                  :exclude_replies => false,
-                                  :include_rts => true
-                                })
+  tweets = [ ]
+  tw_options = { :count => 3200,
+              :exclude_replies => false,
+              :include_rts => true
+            }
+  done = false
+  min_max_id = 0
+
+  while !done
+
+    tweet_chunck = client.user_timeline(usersetup['username'], tw_options)
+
+    puts "Got tweet chunk containing #{tweet_chunck.count} elems with #{tw_options.inspect}" if options[:verbose] > 0
+
+    if tweet_chunck.count > 0
+
+      min_max_id = tweet_chunck.first.id # taking first tweet id as initial value
+
+      tweet_chunck.each do |t|
+
+        min_max_id = t.id if t.id < min_max_id
+
+      end
+
+      tw_options[:max_id] = min_max_id - 1 # picking id that is just 1 lower to the min of the chunk
+
+      tweets = tweets + tweet_chunck
+
+    end
+
+    done = (tweet_chunck.count == 0)
+
+  end
 
   puts "loaded #{tweets.count} tweets"
 
