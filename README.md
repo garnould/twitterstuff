@@ -16,7 +16,8 @@ Disclaimer: author does NOT believe that anything is actually deleted on Twitter
 
 #### Config (undertherug.yml)
 
-**undertherug.yml-sample** is a YAML formatted config file. It can support one or several users/accounts.
+**undertherug.yml-sample** is a YAML formatted config file : it has to be renamed as **undertherug.yml** and modified according to your settings.
+It can support one or several users/accounts.
 
 Keys are:
 
